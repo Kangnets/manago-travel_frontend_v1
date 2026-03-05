@@ -86,6 +86,7 @@ export default function AgencyLayout({
   const { adminLanguage } = useAdminLanguage();
   const router = useRouter();
   const pathname = usePathname();
+  const isPublicAgencyPath = PUBLIC_AGENCY_PATHS.some((p) => pathname === p);
   const tr = (ko: string, en: string) => (adminLanguage === 'en' ? en : ko);
   const sidebarMenus = useMemo(() => {
     return sidebarMenuDefs.map((group) => ({
@@ -97,18 +98,19 @@ export default function AgencyLayout({
     }));
   }, [adminLanguage]);
 
-  // 로그인/회원가입 페이지는 인증 없이 그대로 렌더링 (사이드바 없음)
-  if (PUBLIC_AGENCY_PATHS.some((p) => pathname === p)) {
-    return <>{children}</>;
-  }
-
   useEffect(() => {
+    if (isPublicAgencyPath) return;
     if (!isLoading && !user) {
       router.push('/agency/login');
     } else if (!isLoading && user && user.userType !== 'agency') {
       router.push('/');
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, router, isPublicAgencyPath]);
+
+  // 로그인/회원가입 페이지는 인증 없이 그대로 렌더링 (사이드바 없음)
+  if (isPublicAgencyPath) {
+    return <>{children}</>;
+  }
 
   if (isLoading) {
     return (
