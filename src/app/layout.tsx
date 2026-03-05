@@ -4,7 +4,6 @@ import ConditionalHeader from "@/components/ConditionalHeader";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AdminLanguageProvider } from "@/contexts/AdminLanguageContext";
-import LangToggle from "@/components/LangToggle/LangToggle";
 import ChannelTalk from "@/components/ChannelTalk/ChannelTalk";
 import ComingSoonNotice from "@/components/ComingSoonNotice/ComingSoonNotice";
 
@@ -32,7 +31,6 @@ export default function RootLayout({
             <LanguageProvider>
               <ConditionalHeader />
               <main>{children}</main>
-              <LangToggle />
               <ChannelTalk />
               <ComingSoonNotice />
             </LanguageProvider>
