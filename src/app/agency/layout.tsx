@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdminLanguage } from '@/contexts/AdminLanguageContext';
 import {
   ComputerDesktopIcon,
   ChartBarIcon,
@@ -25,51 +26,51 @@ import {
   StarIcon,
 } from '@heroicons/react/24/outline';
 
-const sidebarMenus = [
+const sidebarMenuDefs = [
   {
-    group: 'CRS 시스템',
+    group: { ko: 'CRS 시스템', en: 'CRS System' },
     items: [
-      { name: 'CRS 예약 관리', path: '/agency/crs', icon: ComputerDesktopIcon },
+      { name: { ko: 'CRS 예약 관리', en: 'CRS Reservations' }, path: '/agency/crs', icon: ComputerDesktopIcon },
     ],
   },
   {
-    group: '운영 관리',
+    group: { ko: '운영 관리', en: 'Operations' },
     items: [
-      { name: '대시보드', path: '/agency/dashboard', icon: ChartBarIcon },
-      { name: '상품 관리', path: '/agency/products', icon: CubeIcon },
-      { name: '예약 목록', path: '/agency/reservations', icon: ClipboardDocumentListIcon },
-      { name: '리뷰 관리', path: '/agency/reviews', icon: StarIcon },
+      { name: { ko: '대시보드', en: 'Dashboard' }, path: '/agency/dashboard', icon: ChartBarIcon },
+      { name: { ko: '상품 관리', en: 'Products' }, path: '/agency/products', icon: CubeIcon },
+      { name: { ko: '예약 목록', en: 'Reservations' }, path: '/agency/reservations', icon: ClipboardDocumentListIcon },
+      { name: { ko: '리뷰 관리', en: 'Reviews' }, path: '/agency/reviews', icon: StarIcon },
     ],
   },
   {
-    group: '정산 관리',
+    group: { ko: '정산 관리', en: 'Finance' },
     items: [
-      { name: '통계 관리', path: '/agency/statistics', icon: PresentationChartBarIcon },
-      { name: '정산 대장', path: '/agency/settlements', icon: BanknotesIcon },
-      { name: '거래내역 조회', path: '/agency/transactions', icon: ArrowsUpDownIcon },
+      { name: { ko: '통계 관리', en: 'Statistics' }, path: '/agency/statistics', icon: PresentationChartBarIcon },
+      { name: { ko: '정산 대장', en: 'Settlements' }, path: '/agency/settlements', icon: BanknotesIcon },
+      { name: { ko: '거래내역 조회', en: 'Transactions' }, path: '/agency/transactions', icon: ArrowsUpDownIcon },
     ],
   },
   {
-    group: '내부 관리',
+    group: { ko: '내부 관리', en: 'Internal' },
     items: [
-      { name: '결재 관리', path: '/agency/approvals', icon: DocumentCheckIcon },
-      { name: '근태 관리', path: '/agency/attendance', icon: ClockIcon },
-      { name: '고객 관리', path: '/agency/customers', icon: UsersIcon },
-      { name: '파트너 관리', path: '/agency/partners', icon: BuildingOfficeIcon },
+      { name: { ko: '결재 관리', en: 'Approvals' }, path: '/agency/approvals', icon: DocumentCheckIcon },
+      { name: { ko: '근태 관리', en: 'Attendance' }, path: '/agency/attendance', icon: ClockIcon },
+      { name: { ko: '고객 관리', en: 'Customers' }, path: '/agency/customers', icon: UsersIcon },
+      { name: { ko: '파트너 관리', en: 'Partners' }, path: '/agency/partners', icon: BuildingOfficeIcon },
     ],
   },
   {
-    group: '커뮤니케이션',
+    group: { ko: '커뮤니케이션', en: 'Communication' },
     items: [
-      { name: '알림', path: '/agency/notifications', icon: BellIcon },
-      { name: '공지사항', path: '/agency/notices', icon: MegaphoneIcon },
+      { name: { ko: '알림', en: 'Notifications' }, path: '/agency/notifications', icon: BellIcon },
+      { name: { ko: '공지사항', en: 'Notices' }, path: '/agency/notices', icon: MegaphoneIcon },
     ],
   },
   {
-    group: '홈페이지 설정',
+    group: { ko: '홈페이지 설정', en: 'Site Settings' },
     items: [
-      { name: '홈페이지 커스터마이징', path: '/agency/customize', icon: PaintBrushIcon },
-      { name: '여권 스캔', path: '/agency/passport-scan', icon: CameraIcon },
+      { name: { ko: '홈페이지 커스터마이징', en: 'Customize Website' }, path: '/agency/customize', icon: PaintBrushIcon },
+      { name: { ko: '여권 스캔', en: 'Passport Scan' }, path: '/agency/passport-scan', icon: CameraIcon },
     ],
   },
 ];
@@ -82,8 +83,19 @@ export default function AgencyLayout({
   children: React.ReactNode;
 }) {
   const { user, isLoading } = useAuth();
+  const { adminLanguage } = useAdminLanguage();
   const router = useRouter();
   const pathname = usePathname();
+  const tr = (ko: string, en: string) => (adminLanguage === 'en' ? en : ko);
+  const sidebarMenus = useMemo(() => {
+    return sidebarMenuDefs.map((group) => ({
+      group: tr(group.group.ko, group.group.en),
+      items: group.items.map((item) => ({
+        ...item,
+        name: tr(item.name.ko, item.name.en),
+      })),
+    }));
+  }, [adminLanguage]);
 
   // 로그인/회원가입 페이지는 인증 없이 그대로 렌더링 (사이드바 없음)
   if (PUBLIC_AGENCY_PATHS.some((p) => pathname === p)) {
@@ -103,7 +115,7 @@ export default function AgencyLayout({
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-[#ffa726] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">로딩 중...</p>
+          <p className="text-gray-600">{tr('로딩 중...', 'Loading...')}</p>
         </div>
       </div>
     );
@@ -142,8 +154,8 @@ export default function AgencyLayout({
             <div className="overflow-hidden flex-1 min-w-0">
               <p className="text-[13px] font-bold text-white truncate flex items-center gap-1.5">
                 {user.agencyName || user.name}
-                {user.agencyRole === 'owner' && <span className="shrink-0 px-1.5 py-0.5 bg-amber-500/30 text-amber-200 text-[9px] font-bold rounded">사장</span>}
-                {user.agencyRole === 'employee' && <span className="shrink-0 px-1.5 py-0.5 bg-white/20 text-white/90 text-[9px] font-bold rounded">직원</span>}
+                {user.agencyRole === 'owner' && <span className="shrink-0 px-1.5 py-0.5 bg-amber-500/30 text-amber-200 text-[9px] font-bold rounded">{tr('사장', 'OWNER')}</span>}
+                {user.agencyRole === 'employee' && <span className="shrink-0 px-1.5 py-0.5 bg-white/20 text-white/90 text-[9px] font-bold rounded">{tr('직원', 'STAFF')}</span>}
               </p>
               <p className="text-[11px] text-white/50 truncate">{user.email}</p>
             </div>
@@ -194,7 +206,7 @@ export default function AgencyLayout({
             className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[13px] font-medium text-white/50 hover:bg-white/10 hover:text-white transition-all"
           >
             <HomeIcon className="w-5 h-5" />
-            고객용 홈으로
+            {tr('고객용 홈으로', 'Go to Customer Home')}
           </Link>
         </div>
       </aside>

@@ -3,6 +3,7 @@ import "./globals.css";
 import ConditionalHeader from "@/components/ConditionalHeader";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { AdminLanguageProvider } from "@/contexts/AdminLanguageContext";
 import LangToggle from "@/components/LangToggle/LangToggle";
 import ChannelTalk from "@/components/ChannelTalk/ChannelTalk";
 import ComingSoonNotice from "@/components/ComingSoonNotice/ComingSoonNotice";
@@ -27,13 +28,15 @@ export default function RootLayout({
     <html lang="ko">
       <body className="antialiased">
         <AuthProvider>
-          <LanguageProvider>
-            <ConditionalHeader />
-            <main>{children}</main>
-            <LangToggle />
-            <ChannelTalk />
-            <ComingSoonNotice />
-          </LanguageProvider>
+          <AdminLanguageProvider>
+            <LanguageProvider>
+              <ConditionalHeader />
+              <main>{children}</main>
+              <LangToggle />
+              <ChannelTalk />
+              <ComingSoonNotice />
+            </LanguageProvider>
+          </AdminLanguageProvider>
         </AuthProvider>
       </body>
     </html>

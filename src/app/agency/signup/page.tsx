@@ -4,11 +4,14 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdminLanguage } from '@/contexts/AdminLanguageContext';
 import { UserType } from '@/types/auth';
 
 export default function AgencySignupPage() {
   const router = useRouter();
   const { signup } = useAuth();
+  const { adminLanguage } = useAdminLanguage();
+  const tr = (ko: string, en: string) => (adminLanguage === 'en' ? en : ko);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -29,12 +32,12 @@ export default function AgencySignupPage() {
     setError('');
 
     if (formData.password !== formData.passwordConfirm) {
-      setError('비밀번호가 일치하지 않습니다');
+      setError(tr('비밀번호가 일치하지 않습니다', 'Passwords do not match'));
       return;
     }
 
     if (!formData.agencyName || !formData.businessNumber) {
-      setError('여행사명과 사업자번호는 필수입니다');
+      setError(tr('여행사명과 사업자번호는 필수입니다', 'Agency name and business number are required'));
       return;
     }
 
@@ -54,7 +57,7 @@ export default function AgencySignupPage() {
       });
       router.push('/');
     } catch (err: any) {
-      setError(err.response?.data?.message || '회원가입에 실패했습니다');
+      setError(err.response?.data?.message || tr('회원가입에 실패했습니다', 'Sign up failed'));
     } finally {
       setIsLoading(false);
     }
@@ -65,18 +68,18 @@ export default function AgencySignupPage() {
       <div className="w-full max-w-[540px] bg-white rounded-2xl shadow-lg p-8">
         <div className="text-center mb-6">
           <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center text-2xl mx-auto mb-3">🏢</div>
-          <h1 className="text-[26px] font-bold font-pretendard mb-2">여행사 회원가입</h1>
-          <p className="text-[14px] text-gray-600">여행 상품을 등록·판매하시는 업체 회원가입입니다</p>
+          <h1 className="text-[26px] font-bold font-pretendard mb-2">{tr('여행사 회원가입', 'Agency Sign Up')}</h1>
+          <p className="text-[14px] text-gray-600">{tr('여행 상품을 등록·판매하시는 업체 회원가입입니다', 'For agencies that register and sell travel products')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="border-b border-gray-200 pb-4 mb-2">
-            <p className="text-[14px] font-bold text-gray-700">담당자 정보</p>
+            <p className="text-[14px] font-bold text-gray-700">{tr('담당자 정보', 'Manager Information')}</p>
           </div>
 
           <div>
             <label htmlFor="email" className="block text-[13px] font-medium text-gray-700 mb-1.5">
-              이메일 *
+              {tr('이메일 *', 'Email *')}
             </label>
             <input
               id="email"
@@ -91,7 +94,7 @@ export default function AgencySignupPage() {
 
           <div>
             <label htmlFor="password" className="block text-[13px] font-medium text-gray-700 mb-1.5">
-              비밀번호 *
+              {tr('비밀번호 *', 'Password *')}
             </label>
             <input
               id="password"
@@ -99,14 +102,14 @@ export default function AgencySignupPage() {
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#ffa726] focus:border-transparent"
-              placeholder="영문, 숫자, 특수문자 포함 8자 이상"
+              placeholder={tr('영문, 숫자, 특수문자 포함 8자 이상', 'At least 8 chars incl. letter, number, symbol')}
               required
             />
           </div>
 
           <div>
             <label htmlFor="passwordConfirm" className="block text-[13px] font-medium text-gray-700 mb-1.5">
-              비밀번호 확인 *
+              {tr('비밀번호 확인 *', 'Confirm Password *')}
             </label>
             <input
               id="passwordConfirm"
@@ -114,14 +117,14 @@ export default function AgencySignupPage() {
               value={formData.passwordConfirm}
               onChange={(e) => setFormData({ ...formData, passwordConfirm: e.target.value })}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#ffa726] focus:border-transparent"
-              placeholder="비밀번호 재입력"
+              placeholder={tr('비밀번호 재입력', 'Re-enter password')}
               required
             />
           </div>
 
           <div>
             <label htmlFor="name" className="block text-[13px] font-medium text-gray-700 mb-1.5">
-              담당자명 *
+              {tr('담당자명 *', 'Manager Name *')}
             </label>
             <input
               id="name"
@@ -129,14 +132,14 @@ export default function AgencySignupPage() {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#ffa726] focus:border-transparent"
-              placeholder="홍길동"
+              placeholder={tr('홍길동', 'John Doe')}
               required
             />
           </div>
 
           <div>
             <label htmlFor="phone" className="block text-[13px] font-medium text-gray-700 mb-1.5">
-              전화번호
+              {tr('전화번호', 'Phone')}
             </label>
             <input
               id="phone"
@@ -149,12 +152,12 @@ export default function AgencySignupPage() {
           </div>
 
           <div className="border-t border-gray-200 pt-4 mt-2">
-            <p className="text-[14px] font-bold text-gray-700 mb-4">여행사 정보</p>
+            <p className="text-[14px] font-bold text-gray-700 mb-4">{tr('여행사 정보', 'Agency Information')}</p>
           </div>
 
           <div>
             <label htmlFor="agencyName" className="block text-[13px] font-medium text-gray-700 mb-1.5">
-              여행사명 *
+              {tr('여행사명 *', 'Agency Name *')}
             </label>
             <input
               id="agencyName"
@@ -162,14 +165,14 @@ export default function AgencySignupPage() {
               value={formData.agencyName}
               onChange={(e) => setFormData({ ...formData, agencyName: e.target.value })}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#ffa726] focus:border-transparent"
-              placeholder="(주)망고여행사"
+              placeholder={tr('(주)망고여행사', 'Mango Travel Co., Ltd.')}
               required
             />
           </div>
 
           <div>
             <label htmlFor="agencyEmail" className="block text-[13px] font-medium text-gray-700 mb-1.5">
-              여행사 대표메일
+              {tr('여행사 대표메일', 'Agency Email')}
             </label>
             <input
               id="agencyEmail"
@@ -177,13 +180,13 @@ export default function AgencySignupPage() {
               value={formData.agencyEmail}
               onChange={(e) => setFormData({ ...formData, agencyEmail: e.target.value })}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#ffa726] focus:border-transparent"
-              placeholder="contact@agency.com (담당자 메일과 별도)"
+              placeholder={tr('contact@agency.com (담당자 메일과 별도)', 'contact@agency.com (separate from manager email)')}
             />
           </div>
 
           <div>
             <label htmlFor="businessNumber" className="block text-[13px] font-medium text-gray-700 mb-1.5">
-              사업자등록번호 *
+              {tr('사업자등록번호 *', 'Business Registration Number *')}
             </label>
             <input
               id="businessNumber"
@@ -198,7 +201,7 @@ export default function AgencySignupPage() {
 
           <div>
             <label htmlFor="licenseNumber" className="block text-[13px] font-medium text-gray-700 mb-1.5">
-              관광사업자 등록번호
+              {tr('관광사업자 등록번호', 'Tourism License Number')}
             </label>
             <input
               id="licenseNumber"
@@ -212,7 +215,7 @@ export default function AgencySignupPage() {
 
           <div>
             <label htmlFor="address" className="block text-[13px] font-medium text-gray-700 mb-1.5">
-              사업장 주소
+              {tr('사업장 주소', 'Business Address')}
             </label>
             <input
               id="address"
@@ -235,21 +238,21 @@ export default function AgencySignupPage() {
             disabled={isLoading}
             className="w-full bg-gradient-to-r from-[#ffa726] to-[#ffb74d] text-white font-bold py-3 rounded-lg text-[15px] hover:from-[#f57c00] hover:to-[#ffa726] transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2 shadow-md"
           >
-            {isLoading ? '가입 중...' : '여행사 회원가입'}
+            {isLoading ? tr('가입 중...', 'Signing up...') : tr('여행사 회원가입', 'Create Agency Account')}
           </button>
         </form>
 
         <div className="mt-6 text-center space-y-2">
           <p className="text-[14px] text-gray-600">
-            이미 여행사 계정이 있으신가요?{' '}
+            {tr('이미 여행사 계정이 있으신가요?', 'Already have an agency account?')}{' '}
             <Link href="/agency/login" className="text-[#ffa726] font-bold hover:underline">
-              여행사 로그인
+              {tr('여행사 로그인', 'Agency Login')}
             </Link>
           </p>
           <p className="text-[13px] text-gray-500">
-            일반 회원으로 가입하시나요?{' '}
+            {tr('일반 회원으로 가입하시나요?', 'Looking for customer sign-up?')}{' '}
             <Link href="/signup" className="text-gray-600 font-medium hover:underline">
-              일반 회원가입
+              {tr('일반 회원가입', 'Customer Sign Up')}
             </Link>
           </p>
         </div>

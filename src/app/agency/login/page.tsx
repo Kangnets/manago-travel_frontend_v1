@@ -4,10 +4,13 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdminLanguage } from '@/contexts/AdminLanguageContext';
 
 export default function AgencyLoginPage() {
   const router = useRouter();
   const { login } = useAuth();
+  const { adminLanguage } = useAdminLanguage();
+  const tr = (ko: string, en: string) => (adminLanguage === 'en' ? en : ko);
   const [showEmailLogin, setShowEmailLogin] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -26,7 +29,7 @@ export default function AgencyLoginPage() {
       // 여행사 로그인 후 CRS 시스템으로 이동
       router.push('/agency/crs');
     } catch (err: any) {
-      setError(err.response?.data?.message || '로그인에 실패했습니다');
+      setError(err.response?.data?.message || tr('로그인에 실패했습니다', 'Login failed'));
     } finally {
       setIsLoading(false);
     }
@@ -38,8 +41,8 @@ export default function AgencyLoginPage() {
         <div className="w-full max-w-[440px] bg-white rounded-2xl shadow-lg p-8">
           <div className="text-center mb-8">
             <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center text-2xl mx-auto mb-3">🏢</div>
-            <h1 className="text-[26px] font-bold font-pretendard mb-2">여행사 로그인</h1>
-            <p className="text-[14px] text-gray-600">여행사 전용 계정으로 로그인하세요</p>
+            <h1 className="text-[26px] font-bold font-pretendard mb-2">{tr('여행사 로그인', 'Agency Login')}</h1>
+            <p className="text-[14px] text-gray-600">{tr('여행사 전용 계정으로 로그인하세요', 'Sign in with your agency account')}</p>
           </div>
 
           <div className="flex flex-col gap-3">
@@ -51,21 +54,21 @@ export default function AgencyLoginPage() {
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                 <polyline points="22,6 12,13 2,6"/>
               </svg>
-              <span className="text-[15px] font-semibold">이메일로 로그인</span>
+              <span className="text-[15px] font-semibold">{tr('이메일로 로그인', 'Sign in with Email')}</span>
             </button>
           </div>
 
           <div className="mt-6 text-center space-y-2">
             <p className="text-[14px] text-gray-600">
-              아직 여행사 회원이 아니신가요?{' '}
+              {tr('아직 여행사 회원이 아니신가요?', 'New to agency account?')}{' '}
               <Link href="/agency/signup" className="text-[#ffa726] font-bold hover:underline">
-                여행사 회원가입
+                {tr('여행사 회원가입', 'Agency Sign Up')}
               </Link>
             </p>
             <p className="text-[13px] text-gray-500">
-              일반 회원이신가요?{' '}
+              {tr('일반 회원이신가요?', 'Are you a customer?')}{' '}
               <Link href="/login" className="text-gray-600 font-medium hover:underline">
-                일반 로그인
+                {tr('일반 로그인', 'Customer Login')}
               </Link>
             </p>
           </div>
@@ -82,10 +85,10 @@ export default function AgencyLoginPage() {
             onClick={() => setShowEmailLogin(false)}
             className="text-gray-400 hover:text-gray-600"
           >
-            ← 뒤로
+            {tr('← 뒤로', '← Back')}
           </button>
           <div className="text-center flex-1">
-            <h1 className="text-[24px] font-bold font-pretendard">여행사 이메일 로그인</h1>
+            <h1 className="text-[24px] font-bold font-pretendard">{tr('여행사 이메일 로그인', 'Agency Email Login')}</h1>
           </div>
           <div className="w-12" />
         </div>
@@ -93,7 +96,7 @@ export default function AgencyLoginPage() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div>
             <label htmlFor="email" className="block text-[14px] font-medium text-gray-700 mb-2">
-              이메일
+              {tr('이메일', 'Email')}
             </label>
             <input
               id="email"
@@ -108,7 +111,7 @@ export default function AgencyLoginPage() {
 
           <div>
             <label htmlFor="password" className="block text-[14px] font-medium text-gray-700 mb-2">
-              비밀번호
+              {tr('비밀번호', 'Password')}
             </label>
             <input
               id="password"
@@ -116,7 +119,7 @@ export default function AgencyLoginPage() {
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-[#ffa726] focus:border-transparent"
-              placeholder="비밀번호 입력"
+              placeholder={tr('비밀번호 입력', 'Enter password')}
               required
             />
           </div>
@@ -132,21 +135,21 @@ export default function AgencyLoginPage() {
             disabled={isLoading}
             className="w-full bg-gradient-to-r from-[#ffa726] to-[#ffb74d] text-white font-bold py-3 rounded-lg text-[15px] hover:from-[#f57c00] hover:to-[#ffa726] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
           >
-            {isLoading ? '로그인 중...' : '로그인'}
+            {isLoading ? tr('로그인 중...', 'Signing in...') : tr('로그인', 'Sign In')}
           </button>
         </form>
 
         <div className="mt-6 text-center space-y-2">
           <p className="text-[14px] text-gray-600">
-            아직 여행사 회원이 아니신가요?{' '}
+            {tr('아직 여행사 회원이 아니신가요?', 'New to agency account?')}{' '}
             <Link href="/agency/signup" className="text-[#ffa726] font-bold hover:underline">
-              여행사 회원가입
+              {tr('여행사 회원가입', 'Agency Sign Up')}
             </Link>
           </p>
           <p className="text-[13px] text-gray-500">
-            일반 회원이신가요?{' '}
+            {tr('일반 회원이신가요?', 'Are you a customer?')}{' '}
             <Link href="/login" className="text-gray-600 font-medium hover:underline">
-              일반 로그인
+              {tr('일반 로그인', 'Customer Login')}
             </Link>
           </p>
         </div>

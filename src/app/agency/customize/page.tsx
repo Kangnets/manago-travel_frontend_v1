@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage, Language } from '@/contexts/LanguageContext';
+import { useAdminLanguage } from '@/contexts/AdminLanguageContext';
 import {
   SwatchIcon,
   DocumentTextIcon,
@@ -69,9 +71,17 @@ interface AgencyCustomization {
   templateId: string;
   // Slug
   slug: string;
+  // Language
+  adminLanguage: Language;
+  serviceLanguage: Language;
 }
 
-const defaultCustomization = (agencyName: string, email: string): AgencyCustomization => ({
+const defaultCustomization = (
+  agencyName: string,
+  email: string,
+  adminLanguage: Language,
+  serviceLanguage: Language,
+): AgencyCustomization => ({
   agencyDisplayName: agencyName,
   slogan: '행복한 여행의 시작',
   logoUrl: '',
@@ -100,6 +110,8 @@ const defaultCustomization = (agencyName: string, email: string): AgencyCustomiz
   showPassportOcr: false,
   templateId: 'modern',
   slug: '',
+  adminLanguage,
+  serviceLanguage,
 });
 
 const PRESET_COLORS = [
@@ -125,26 +137,46 @@ type Tab = 'brand' | 'content' | 'features' | 'contact' | 'url' | 'preview';
 export default function CustomizePage() {
   const { user } = useAuth();
   const router = useRouter();
+  const { adminLanguage, setAdminLanguage } = useAdminLanguage();
+  const { language: publicLanguage, setLanguage } = useLanguage();
+  const tr = (ko: string, en: string) => (adminLanguage === 'en' ? en : ko);
   const [activeTab, setActiveTab] = useState<Tab>('brand');
   const [settings, setSettings] = useState<AgencyCustomization>(
-    defaultCustomization(user?.agencyName || user?.name || '여행사', user?.email || '')
+    defaultCustomization(
+      user?.agencyName || user?.name || '여행사',
+      user?.email || '',
+      adminLanguage,
+      publicLanguage,
+    )
   );
   const [isSaved, setIsSaved] = useState(false);
   const [slugError, setSlugError] = useState('');
 
   useEffect(() => {
     if (!user) return;
+    const base = defaultCustomization(
+      user.agencyName || user.name || '여행사',
+      user.email,
+      adminLanguage,
+      publicLanguage,
+    );
     const saved = localStorage.getItem(`agency_customization_${user.id}`);
     if (saved) {
       try {
-        setSettings(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        setSettings({
+          ...base,
+          ...parsed,
+          adminLanguage: parsed.adminLanguage === 'en' ? 'en' : base.adminLanguage,
+          serviceLanguage: parsed.serviceLanguage === 'en' ? 'en' : base.serviceLanguage,
+        });
       } catch {
-        // ignore
+        setSettings(base);
       }
     } else {
-      setSettings(defaultCustomization(user.agencyName || user.name || '여행사', user.email));
+      setSettings(base);
     }
-  }, [user]);
+  }, [user, adminLanguage, publicLanguage]);
 
   const handleSave = (navigateToPortal: boolean = false) => {
     if (!user) return;
@@ -154,6 +186,8 @@ export default function CustomizePage() {
       return;
     }
     localStorage.setItem(`agency_customization_${user.id}`, JSON.stringify(settings));
+    setAdminLanguage(settings.adminLanguage);
+    setLanguage(settings.serviceLanguage);
     // Dispatch storage event for other tabs/components to detect changes
     window.dispatchEvent(new StorageEvent('storage', {
       key: `agency_customization_${user.id}`,
@@ -178,12 +212,12 @@ export default function CustomizePage() {
     : null;
 
   const tabs: { key: Tab; label: string; icon: typeof SwatchIcon }[] = [
-    { key: 'brand', label: '브랜드 설정', icon: SwatchIcon },
-    { key: 'content', label: '콘텐츠 설정', icon: DocumentTextIcon },
-    { key: 'features', label: '기능 설정', icon: Cog6ToothIcon },
-    { key: 'contact', label: '연락처 / SNS', icon: PhoneIcon },
-    { key: 'url', label: 'URL 설정', icon: LinkIcon },
-    { key: 'preview', label: '미리보기', icon: EyeIcon },
+    { key: 'brand', label: tr('브랜드 설정', 'Brand'), icon: SwatchIcon },
+    { key: 'content', label: tr('콘텐츠 설정', 'Content'), icon: DocumentTextIcon },
+    { key: 'features', label: tr('기능 설정', 'Features'), icon: Cog6ToothIcon },
+    { key: 'contact', label: tr('연락처 / SNS', 'Contact / SNS'), icon: PhoneIcon },
+    { key: 'url', label: tr('URL 설정', 'URL'), icon: LinkIcon },
+    { key: 'preview', label: tr('미리보기', 'Preview'), icon: EyeIcon },
   ];
 
   const inputCls = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-[#ffa726]/30 focus:border-[#ffa726] transition-all';
@@ -194,9 +228,9 @@ export default function CustomizePage() {
       {/* Header */}
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-[24px] font-bold text-gray-900">홈페이지 커스터마이징</h1>
+          <h1 className="text-[24px] font-bold text-gray-900">{tr('홈페이지 커스터마이징', 'Website Customization')}</h1>
           <p className="text-[14px] text-gray-500 mt-1">
-            고객용 웹사이트를 여행사 브랜드에 맞게 커스터마이징하세요
+            {tr('고객용 웹사이트를 여행사 브랜드에 맞게 커스터마이징하세요', 'Customize your customer-facing website for your agency brand')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -208,7 +242,9 @@ export default function CustomizePage() {
                 : 'bg-gradient-to-r from-[#ffa726] to-[#ffb74d] text-white hover:from-[#f57c00] hover:to-[#ffa726]'
             }`}
           >
-            {isSaved ? <><CheckCircleIcon className="w-5 h-5" /> 저장됨</> : <><CheckIcon className="w-5 h-5" /> 저장하기</>}
+            {isSaved
+              ? <><CheckCircleIcon className="w-5 h-5" /> {tr('저장됨', 'Saved')}</>
+              : <><CheckIcon className="w-5 h-5" /> {tr('저장하기', 'Save')}</>}
           </button>
           {settings.slug && (
             <button
@@ -216,7 +252,7 @@ export default function CustomizePage() {
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-[14px] transition-all shadow-md bg-[#1a1a2e] text-white hover:bg-[#2d2d4e]"
             >
               <ArrowTopRightOnSquareIcon className="w-5 h-5" />
-              저장 후 확인
+              {tr('저장 후 확인', 'Save & Open')}
             </button>
           )}
         </div>
@@ -227,7 +263,7 @@ export default function CustomizePage() {
         <div className="mb-4 px-4 py-3 bg-green-50 border border-green-200 rounded-xl flex items-center gap-3">
           <span className="flex items-center gap-1.5 text-green-600 text-[13px]">
             <GlobeAltIcon className="w-4 h-4" />
-            고객용 포털:
+            {tr('고객용 포털:', 'Customer Portal:')}
           </span>
           <a href={portalUrl} target="_blank" rel="noopener noreferrer" className="text-green-700 font-mono text-[13px] font-bold hover:underline">
             {portalUrl}
@@ -237,7 +273,7 @@ export default function CustomizePage() {
             className="ml-auto flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 text-[12px] rounded-lg hover:bg-green-200 transition-colors"
           >
             <ClipboardIcon className="w-3.5 h-3.5" />
-            복사
+            {tr('복사', 'Copy')}
           </button>
         </div>
       )}
@@ -265,26 +301,57 @@ export default function CustomizePage() {
         <div className="grid grid-cols-2 gap-6">
           <div className="space-y-4">
             <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-              <h2 className="text-[15px] font-bold text-gray-900 mb-4">기본 정보</h2>
+              <h2 className="text-[15px] font-bold text-gray-900 mb-4">{tr('언어 설정', 'Language Settings')}</h2>
               <div className="space-y-3">
                 <div>
-                  <label className={labelCls}>여행사 표시명 *</label>
-                  <input value={settings.agencyDisplayName} onChange={(e) => update('agencyDisplayName', e.target.value)} className={inputCls} placeholder="홈페이지에 표시될 여행사 이름" />
+                  <label className={labelCls}>{tr('관리자 페이지 언어', 'Admin Console Language')}</label>
+                  <select
+                    value={settings.adminLanguage}
+                    onChange={(e) => update('adminLanguage', e.target.value as Language)}
+                    className={inputCls}
+                  >
+                    <option value="ko">한국어</option>
+                    <option value="en">English</option>
+                  </select>
                 </div>
                 <div>
-                  <label className={labelCls}>슬로건</label>
-                  <input value={settings.slogan} onChange={(e) => update('slogan', e.target.value)} className={inputCls} placeholder="짧고 인상적인 한 문장" />
+                  <label className={labelCls}>{tr('본 서비스 기본 언어', 'Public Site Default Language')}</label>
+                  <select
+                    value={settings.serviceLanguage}
+                    onChange={(e) => update('serviceLanguage', e.target.value as Language)}
+                    className={inputCls}
+                  >
+                    <option value="ko">한국어</option>
+                    <option value="en">English</option>
+                  </select>
+                </div>
+                <p className="text-[11px] text-gray-500">
+                  {tr('저장하기를 누르면 관리자 화면 언어와 본 서비스 기본 언어가 함께 적용됩니다.', 'Click Save to apply both admin and public site language settings.')}
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+              <h2 className="text-[15px] font-bold text-gray-900 mb-4">{tr('기본 정보', 'Basic Info')}</h2>
+              <div className="space-y-3">
+                <div>
+                  <label className={labelCls}>{tr('여행사 표시명 *', 'Agency Display Name *')}</label>
+                  <input value={settings.agencyDisplayName} onChange={(e) => update('agencyDisplayName', e.target.value)} className={inputCls} placeholder={tr('홈페이지에 표시될 여행사 이름', 'Agency name shown on the website')} />
                 </div>
                 <div>
-                  <label className={labelCls}>로고 이미지 URL</label>
+                  <label className={labelCls}>{tr('슬로건', 'Slogan')}</label>
+                  <input value={settings.slogan} onChange={(e) => update('slogan', e.target.value)} className={inputCls} placeholder={tr('짧고 인상적인 한 문장', 'A short, memorable sentence')} />
+                </div>
+                <div>
+                  <label className={labelCls}>{tr('로고 이미지 URL', 'Logo Image URL')}</label>
                   <input value={settings.logoUrl} onChange={(e) => update('logoUrl', e.target.value)} className={inputCls} placeholder="https://..." />
-                  <p className="text-[11px] text-gray-400 mt-1">※ 빈칸이면 텍스트 로고가 표시됩니다</p>
+                  <p className="text-[11px] text-gray-400 mt-1">{tr('※ 빈칸이면 텍스트 로고가 표시됩니다', 'If empty, a text logo will be shown')}</p>
                 </div>
               </div>
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-              <h2 className="text-[15px] font-bold text-gray-900 mb-4">템플릿 선택</h2>
+              <h2 className="text-[15px] font-bold text-gray-900 mb-4">{tr('템플릿 선택', 'Template')}</h2>
               <div className="grid grid-cols-2 gap-3">
                 {TEMPLATES.map((tpl) => (
                   <button
@@ -303,7 +370,7 @@ export default function CustomizePage() {
                     <div className="text-[11px] text-gray-500">{tpl.desc}</div>
                     {settings.templateId === tpl.id && (
                       <div className="mt-1 flex items-center gap-1 text-[11px] text-[#ffa726] font-bold">
-                        <CheckIcon className="w-3 h-3" /> 선택됨
+                        <CheckIcon className="w-3 h-3" /> {tr('선택됨', 'Selected')}
                       </div>
                     )}
                   </button>
@@ -314,10 +381,10 @@ export default function CustomizePage() {
 
           <div className="space-y-4">
             <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-              <h2 className="text-[15px] font-bold text-gray-900 mb-4">색상 테마</h2>
+              <h2 className="text-[15px] font-bold text-gray-900 mb-4">{tr('색상 테마', 'Color Theme')}</h2>
               <div className="space-y-4">
                 <div>
-                  <label className={labelCls}>프리셋 색상</label>
+                  <label className={labelCls}>{tr('프리셋 색상', 'Preset Colors')}</label>
                   <div className="grid grid-cols-4 gap-2 mt-2">
                     {PRESET_COLORS.map((preset) => (
                       <button
@@ -344,7 +411,7 @@ export default function CustomizePage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className={labelCls}>주 색상</label>
+                    <label className={labelCls}>{tr('주 색상', 'Primary')}</label>
                     <div className="flex gap-2">
                       <input
                         type="color"
@@ -361,7 +428,7 @@ export default function CustomizePage() {
                     </div>
                   </div>
                   <div>
-                    <label className={labelCls}>보조 색상</label>
+                    <label className={labelCls}>{tr('보조 색상', 'Secondary')}</label>
                     <div className="flex gap-2">
                       <input
                         type="color"
@@ -394,16 +461,16 @@ export default function CustomizePage() {
                 <span className="text-white/50 text-[11px] ml-auto">{settings.slogan}</span>
               </div>
               <div className="p-4 bg-white">
-                <div className="text-[12px] font-medium text-gray-700 mb-2">색상 미리보기</div>
+                <div className="text-[12px] font-medium text-gray-700 mb-2">{tr('색상 미리보기', 'Color Preview')}</div>
                 <div className="flex gap-2 flex-wrap">
                   <span className="px-3 py-1.5 rounded-lg text-white text-[12px] font-bold shadow-sm" style={{ background: settings.primaryColor }}>
-                    주 색상 버튼
+                    {tr('주 색상 버튼', 'Primary Button')}
                   </span>
                   <span className="px-3 py-1.5 rounded-lg text-white text-[12px] font-bold shadow-sm" style={{ background: settings.secondaryColor }}>
-                    보조 색상
+                    {tr('보조 색상', 'Secondary')}
                   </span>
                   <span className="px-3 py-1.5 rounded-lg text-[12px] font-bold border-2" style={{ color: settings.primaryColor, borderColor: settings.primaryColor }}>
-                    아웃라인
+                    {tr('아웃라인', 'Outline')}
                   </span>
                 </div>
               </div>
