@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserType } from '@/types/auth';
+import { UserIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
 
 type Step = 'select-type' | 'select-social' | 'form';
 
@@ -21,6 +22,7 @@ export default function SignupPage() {
     phone: '',
     // 여행사 전용
     agencyName: '',
+    agencyEmail: '',
     businessNumber: '',
     licenseNumber: '',
     address: '',
@@ -62,6 +64,7 @@ export default function SignupPage() {
         userType,
         phone: formData.phone || undefined,
         agencyName: formData.agencyName || undefined,
+        agencyEmail: formData.agencyEmail || undefined,
         businessNumber: formData.businessNumber || undefined,
         licenseNumber: formData.licenseNumber || undefined,
         address: formData.address || undefined,
@@ -91,10 +94,10 @@ export default function SignupPage() {
           <div className="grid grid-cols-2 gap-4">
             <button
               onClick={() => handleSelectType(UserType.CUSTOMER)}
-              className="flex flex-col items-center gap-4 p-8 border-2 border-gray-200 rounded-xl hover:border-[#fbd865] hover:bg-[#fffef5] transition-all group"
+              className="flex flex-col items-center gap-4 p-8 border-2 border-gray-200 rounded-xl hover:border-[#ffa726] hover:bg-orange-50 transition-all group"
             >
-              <div className="w-16 h-16 bg-[#f8f9fa] rounded-full flex items-center justify-center text-[32px] group-hover:bg-[#fbd865] transition-colors">
-                👤
+              <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center group-hover:bg-gradient-to-br group-hover:from-[#ffa726] group-hover:to-[#ff9800] transition-all">
+                <UserIcon className="w-8 h-8 text-gray-600 group-hover:text-white transition-colors" />
               </div>
               <div className="text-center">
                 <h3 className="text-[18px] font-bold mb-1">일반 회원</h3>
@@ -104,10 +107,10 @@ export default function SignupPage() {
 
             <button
               onClick={() => handleSelectType(UserType.AGENCY)}
-              className="flex flex-col items-center gap-4 p-8 border-2 border-gray-200 rounded-xl hover:border-[#fbd865] hover:bg-[#fffef5] transition-all group"
+              className="flex flex-col items-center gap-4 p-8 border-2 border-gray-200 rounded-xl hover:border-[#ffa726] hover:bg-orange-50 transition-all group"
             >
-              <div className="w-16 h-16 bg-[#f8f9fa] rounded-full flex items-center justify-center text-[32px] group-hover:bg-[#fbd865] transition-colors">
-                🏢
+              <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center group-hover:bg-gradient-to-br group-hover:from-[#ffa726] group-hover:to-[#ff9800] transition-all">
+                <BuildingOfficeIcon className="w-8 h-8 text-gray-600 group-hover:text-white transition-colors" />
               </div>
               <div className="text-center">
                 <h3 className="text-[18px] font-bold mb-1">여행사 회원</h3>
@@ -116,12 +119,19 @@ export default function SignupPage() {
             </button>
           </div>
 
-          <div className="mt-8 text-center">
+          <div className="mt-8 text-center space-y-2">
             <p className="text-[14px] text-gray-600">
               이미 계정이 있으신가요?{' '}
-              <Link href="/login" className="text-[#fbd865] font-bold hover:underline">
+              <Link href="/login" className="text-[#ffa726] font-bold hover:underline">
                 로그인
               </Link>
+            </p>
+            <p className="text-[13px] text-gray-500">
+              여행사 전용 가입은{' '}
+              <Link href="/agency/signup" className="text-gray-600 font-medium hover:underline">
+                여행사 회원가입
+              </Link>
+              에서 하세요
             </p>
           </div>
         </div>
@@ -182,7 +192,7 @@ export default function SignupPage() {
 
             <button
               onClick={() => setStep('form')}
-              className="w-full flex items-center justify-center gap-3 px-6 py-3.5 border-2 border-[#fbd865] bg-white rounded-lg hover:bg-[#fffef5] transition-colors"
+              className="w-full flex items-center justify-center gap-3 px-6 py-3.5 border-2 border-[#ffa726] bg-white rounded-lg hover:bg-orange-50 transition-colors"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
@@ -192,11 +202,17 @@ export default function SignupPage() {
             </button>
           </div>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center space-y-2">
             <p className="text-[14px] text-gray-600">
               이미 계정이 있으신가요?{' '}
-              <Link href="/login" className="text-[#fbd865] font-bold hover:underline">
+              <Link href="/login" className="text-[#ffa726] font-bold hover:underline">
                 로그인
+              </Link>
+            </p>
+            <p className="text-[13px] text-gray-500">
+              여행사 회원이신가요?{' '}
+              <Link href="/agency/signup" className="text-gray-600 font-medium hover:underline">
+                여행사 회원가입
               </Link>
             </p>
           </div>
@@ -234,7 +250,7 @@ export default function SignupPage() {
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#fbd865] focus:border-transparent"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#ffa726] focus:border-transparent"
               placeholder="example@email.com"
               required
             />
@@ -249,7 +265,7 @@ export default function SignupPage() {
               type="password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#fbd865] focus:border-transparent"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#ffa726] focus:border-transparent"
               placeholder="영문, 숫자, 특수문자 포함 8자 이상"
               required
             />
@@ -264,7 +280,7 @@ export default function SignupPage() {
               type="password"
               value={formData.passwordConfirm}
               onChange={(e) => setFormData({ ...formData, passwordConfirm: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#fbd865] focus:border-transparent"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#ffa726] focus:border-transparent"
               placeholder="비밀번호 재입력"
               required
             />
@@ -279,7 +295,7 @@ export default function SignupPage() {
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#fbd865] focus:border-transparent"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#ffa726] focus:border-transparent"
               placeholder="홍길동"
               required
             />
@@ -294,7 +310,7 @@ export default function SignupPage() {
               type="tel"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#fbd865] focus:border-transparent"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#ffa726] focus:border-transparent"
               placeholder="010-1234-5678"
             />
           </div>
@@ -315,9 +331,23 @@ export default function SignupPage() {
                   type="text"
                   value={formData.agencyName}
                   onChange={(e) => setFormData({ ...formData, agencyName: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#fbd865] focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#ffa726] focus:border-transparent"
                   placeholder="(주)망고여행사"
                   required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="agencyEmail" className="block text-[13px] font-medium text-gray-700 mb-1.5">
+                  여행사 대표메일
+                </label>
+                <input
+                  id="agencyEmail"
+                  type="email"
+                  value={formData.agencyEmail}
+                  onChange={(e) => setFormData({ ...formData, agencyEmail: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#ffa726] focus:border-transparent"
+                  placeholder="contact@agency.com (담당자 메일과 별도)"
                 />
               </div>
 
@@ -330,7 +360,7 @@ export default function SignupPage() {
                   type="text"
                   value={formData.businessNumber}
                   onChange={(e) => setFormData({ ...formData, businessNumber: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#fbd865] focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#ffa726] focus:border-transparent"
                   placeholder="123-45-67890"
                   required
                 />
@@ -345,7 +375,7 @@ export default function SignupPage() {
                   type="text"
                   value={formData.licenseNumber}
                   onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#fbd865] focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#ffa726] focus:border-transparent"
                   placeholder="제2026-000001호"
                 />
               </div>
@@ -359,7 +389,7 @@ export default function SignupPage() {
                   type="text"
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#fbd865] focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#ffa726] focus:border-transparent"
                   placeholder="서울특별시 중구 세종대로 123"
                 />
               </div>
@@ -375,17 +405,23 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-[#fbd865] text-black font-bold py-3 rounded-lg text-[15px] hover:bg-[#f9d04f] transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+            className="w-full bg-gradient-to-r from-[#ffa726] to-[#ffb74d] text-white font-bold py-3 rounded-lg text-[15px] hover:from-[#f57c00] hover:to-[#ffa726] transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2 shadow-md"
           >
             {isLoading ? '가입 중...' : '회원가입'}
           </button>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-6 text-center space-y-2">
           <p className="text-[14px] text-gray-600">
             이미 계정이 있으신가요?{' '}
-            <Link href="/login" className="text-[#fbd865] font-bold hover:underline">
+            <Link href="/login" className="text-[#ffa726] font-bold hover:underline">
               로그인
+            </Link>
+          </p>
+          <p className="text-[13px] text-gray-500">
+            여행사 회원이신가요?{' '}
+            <Link href="/agency/signup" className="text-gray-600 font-medium hover:underline">
+              여행사 회원가입
             </Link>
           </p>
         </div>

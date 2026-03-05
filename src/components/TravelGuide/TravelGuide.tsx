@@ -2,52 +2,89 @@
 
 import Link from 'next/link';
 import SafeImage from '@/components/ui/SafeImage';
+import { 
+  InformationCircleIcon, 
+  MapPinIcon, 
+  TrophyIcon, 
+  BeakerIcon 
+} from '@heroicons/react/24/outline';
+
+const BASE = 'https://images.unsplash.com';
 
 interface GuideItem {
   id: string;
   category: string;
   title: string;
   imageUrl: string;
+  Icon: any;
+  color: string;
 }
 
 const guides: GuideItem[] = [
-  { id: '1', category: '여행 꿀팁', title: '베트남 여행 전 꼭 알아야 할 5가지', imageUrl: '/placeholder.svg' },
-  { id: '2', category: '맛집 가이드', title: '현지인만 아는 다낭 찐 맛집 리스트', imageUrl: '/placeholder.svg' },
-  { id: '3', category: '골프 가이드', title: '초보자도 즐기기 좋은 동남아 골프장', imageUrl: '/placeholder.svg' },
-  { id: '4', category: '호텔 리뷰', title: '가성비 vs 럭셔리, 푸꾸옥 리조트 비교', imageUrl: '/placeholder.svg' },
+  { 
+    id: '1', 
+    category: '여행 준비', 
+    title: '푸꾸옥 여행 전 꼭 알아야 할 10가지', 
+    // Vietnam travel preparation
+    imageUrl: `${BASE}/photo-1713551584263-9881fefc5ad7?auto=format&fit=crop&w=600&q=80`,
+    Icon: InformationCircleIcon,
+    color: 'text-blue-600'
+  },
+  { 
+    id: '2', 
+    category: '맛집 탐방', 
+    title: '푸꾸옥 로컬 맛집 BEST 10', 
+    // Hanoi Market / Vietnamese food
+    imageUrl: `${BASE}/photo-1496310646944-3203203f09bb?auto=format&fit=crop&w=600&q=80`,
+    Icon: MapPinIcon,
+    color: 'text-red-600'
+  },
+  { 
+    id: '3', 
+    category: '골프 가이드', 
+    title: '푸꾸옥 프리미엄 골프장 완전정복', 
+    // Golf course by ocean (Da Nang style)
+    imageUrl: `${BASE}/photo-1766288020088-4b95f5409376?auto=format&fit=crop&w=600&q=80`,
+    Icon: TrophyIcon,
+    color: 'text-green-600'
+  },
+  { 
+    id: '4', 
+    category: '휴양지 추천', 
+    title: '푸꾸옥에서 꼭 가봐야 할 휴양 스팟 7선', 
+    // Phu Quoc lagoon / tropical beach
+    imageUrl: `${BASE}/photo-1567115220168-93d296e55a0a?auto=format&fit=crop&w=600&q=80`,
+    Icon: BeakerIcon,
+    color: 'text-purple-600'
+  },
 ];
 
 export default function TravelGuide() {
   return (
-    <section className="w-full max-w-[1280px] mx-auto section-padding py-8 sm:py-10 md:py-12">
-      <div className="flex items-center justify-between mb-5 sm:mb-6">
-        <h2 className="text-[20px] sm:text-[22px] md:text-[24px] font-bold font-pretendard">여행 지식백과</h2>
-        <Link href="/guide" className="text-[#888] hover:text-black transition-colors text-[13px] sm:text-[14px]">
-          전체보기 →
-        </Link>
-      </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
-        {guides.map((guide) => (
-          <Link href={`/guide/${guide.id}`} key={guide.id} className="group cursor-pointer">
-            <div className="flex flex-col gap-3">
-              <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-gray-100">
-                <SafeImage
-                  src={guide.imageUrl}
-                  alt={guide.title}
-                  fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-[12px] sm:text-[13px] font-bold text-[#fbd865]">{guide.category}</span>
-                <h3 className="text-[14px] sm:text-[15px] md:text-[16px] font-bold text-black leading-snug group-hover:text-gray-700 transition-colors line-clamp-2">
-                  {guide.title}
-                </h3>
-              </div>
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+      {guides.map((guide) => (
+        <Link href={`/guide/${guide.id}`} key={guide.id} className="group cursor-pointer">
+          <div className="flex flex-col gap-4 bg-white p-4 rounded-xl hover:shadow-2xl transition-all border border-gray-100">
+            <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden bg-gray-100">
+              <SafeImage
+                src={guide.imageUrl}
+                alt={guide.title}
+                fill
+                className="object-cover transition-transform duration-500 group-hover:scale-110"
+              />
             </div>
-          </Link>
-        ))}
-      </div>
-    </section>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-1.5">
+                <guide.Icon className={`w-4 h-4 ${guide.color}`} />
+                <span className={`text-[12px] font-bold ${guide.color}`}>{guide.category}</span>
+              </div>
+              <h3 className="text-[15px] font-bold text-gray-900 leading-snug group-hover:text-[#ffa726] transition-colors line-clamp-2">
+                {guide.title}
+              </h3>
+            </div>
+          </div>
+        </Link>
+      ))}
+    </div>
   );
 }

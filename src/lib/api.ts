@@ -9,6 +9,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
 
 // 인터셉터 설정
@@ -25,14 +26,18 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('API Error:', error);
+    if (error.response?.status === 401) {
+      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/agency/login')) {
+        // 인증 만료 시 조용히 처리 (리다이렉트는 AuthContext에서 처리)
+      }
+    }
     return Promise.reject(error);
   }
 );
 
 // Product API
 export const productAPI = {
-  getAll: async (params?: { category?: string; limit?: number }) => {
+  getAll: async (params?: { category?: string; location?: string; limit?: number }) => {
     const response = await apiClient.get<Product[]>('/products', { params });
     return response.data;
   },
@@ -94,6 +99,36 @@ export const reviewAPI = {
 
   getByProductId: async (productId: string) => {
     const response = await apiClient.get<Review[]>(`/reviews/product/${productId}`);
+    return response.data;
+  },
+};
+
+// 예약 API (손님용)
+export const reservationAPI = {
+  create: async (data: {
+    productId: string;
+    departureDate: string;
+    returnDate?: string;
+    adultCount: number;
+    childCount?: number;
+    infantCount?: number;
+    totalAmount: number;
+    contactName: string;
+    contactPhone: string;
+    contactEmail?: string;
+    memo?: string;
+  }) => {
+    const response = await apiClient.post('/reservations', data);
+    return response.data;
+  },
+
+  getMyReservations: async () => {
+    const response = await apiClient.get('/reservations');
+    return response.data;
+  },
+
+  getById: async (id: string) => {
+    const response = await apiClient.get(`/reservations/${id}`);
     return response.data;
   },
 };

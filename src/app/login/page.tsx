@@ -1,12 +1,21 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { BuildingOfficeIcon } from '@heroicons/react/24/outline';
 
-export default function LoginPage() {
+const OAUTH_ERROR_MESSAGES: Record<string, string> = {
+  google_oauth_not_configured:
+    '구글 로그인이 아직 설정되지 않았습니다. 이메일 로그인을 이용해 주세요. (관리자: backend .env에 GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET 설정 후 docs/OAUTH_SETUP.md 참고)',
+  kakao_oauth_not_configured:
+    '카카오 로그인이 아직 설정되지 않았습니다. 이메일 로그인을 이용해 주세요.',
+};
+
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
   const [showEmailLogin, setShowEmailLogin] = useState(false);
   const [formData, setFormData] = useState({
@@ -14,11 +23,22 @@ export default function LoginPage() {
     password: '',
   });
   const [error, setError] = useState('');
+  const [oauthError, setOauthError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const err = searchParams.get('error');
+    if (err && OAUTH_ERROR_MESSAGES[err]) {
+      setOauthError(OAUTH_ERROR_MESSAGES[err]);
+      router.replace('/login', { scroll: false });
+    }
+  }, [searchParams, router]);
 
   const handleSocialLogin = (provider: 'google' | 'kakao') => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
-    window.location.href = `${apiUrl}/auth/${provider}`;
+    const redirect = searchParams.get('redirect');
+    const state = redirect ? `?redirect=${encodeURIComponent(redirect)}` : '';
+    window.location.href = `${apiUrl}/auth/${provider}${state}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -28,9 +48,11 @@ export default function LoginPage() {
 
     try {
       await login(formData);
-      router.push('/');
-    } catch (err: any) {
-      setError(err.response?.data?.message || '로그인에 실패했습니다');
+      const redirect = searchParams.get('redirect');
+      router.push(redirect || '/');
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      setError(axiosErr.response?.data?.message || '로그인에 실패했습니다');
     } finally {
       setIsLoading(false);
     }
@@ -44,6 +66,12 @@ export default function LoginPage() {
             <h1 className="text-[26px] font-bold font-pretendard mb-2">로그인</h1>
             <p className="text-[14px] text-gray-600">망고트래블에 오신 것을 환영합니다</p>
           </div>
+
+          {oauthError && (
+            <div className="mb-4 p-4 bg-amber-50 border border-amber-200 text-amber-800 text-[13px] rounded-lg">
+              {oauthError}
+            </div>
+          )}
 
           <div className="flex flex-col gap-3">
             <button
@@ -80,7 +108,7 @@ export default function LoginPage() {
 
             <button
               onClick={() => setShowEmailLogin(true)}
-              className="w-full flex items-center justify-center gap-3 px-6 py-3.5 border-2 border-[#fbd865] bg-white rounded-lg hover:bg-[#fffef5] transition-colors"
+              className="w-full flex items-center justify-center gap-3 px-6 py-3.5 border-2 border-[#ffa726] bg-white rounded-lg hover:bg-orange-50 transition-colors"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
@@ -90,13 +118,28 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <div className="mt-6 text-center">
-            <p className="text-[14px] text-gray-600">
+          <div className="mt-6 space-y-3">
+            <p className="text-[14px] text-gray-600 text-center">
               아직 회원이 아니신가요?{' '}
-              <Link href="/signup" className="text-[#fbd865] font-bold hover:underline">
+              <Link href="/signup" className="text-[#ffa726] font-bold hover:underline">
                 회원가입
               </Link>
             </p>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200"></div>
+              </div>
+              <div className="relative flex justify-center text-[13px]">
+                <span className="px-4 bg-white text-gray-500">또는</span>
+              </div>
+            </div>
+            <Link
+              href="/agency/login"
+              className="flex items-center justify-center gap-2 w-full px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <BuildingOfficeIcon className="w-5 h-5 text-gray-600" />
+              <span className="text-[15px] font-semibold text-gray-700">여행사 회원 로그인</span>
+            </Link>
           </div>
         </div>
       </div>
@@ -129,7 +172,7 @@ export default function LoginPage() {
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-[#fbd865] focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-[#ffa726] focus:border-transparent"
               placeholder="example@email.com"
               required
             />
@@ -144,7 +187,7 @@ export default function LoginPage() {
               type="password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-[#fbd865] focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-[#ffa726] focus:border-transparent"
               placeholder="비밀번호 입력"
               required
             />
@@ -159,21 +202,48 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-[#fbd865] text-black font-bold py-3 rounded-lg text-[15px] hover:bg-[#f9d04f] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-[#ffa726] to-[#ffb74d] text-white font-bold py-3 rounded-lg text-[15px] hover:from-[#f57c00] hover:to-[#ffa726] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
           >
             {isLoading ? '로그인 중...' : '로그인'}
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-[14px] text-gray-600">
+        <div className="mt-6 space-y-3">
+          <p className="text-[14px] text-gray-600 text-center">
             아직 회원이 아니신가요?{' '}
-            <Link href="/signup" className="text-[#fbd865] font-bold hover:underline">
+            <Link href="/signup" className="text-[#ffa726] font-bold hover:underline">
               회원가입
             </Link>
           </p>
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <div className="relative flex justify-center text-[13px]">
+              <span className="px-4 bg-white text-gray-500">또는</span>
+            </div>
+          </div>
+          <Link
+            href="/agency/login"
+            className="flex items-center justify-center gap-2 w-full px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <BuildingOfficeIcon className="w-5 h-5 text-gray-600" />
+            <span className="text-[15px] font-semibold text-gray-700">여행사 회원 로그인</span>
+          </Link>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#f8f9fa]">
+        <div className="w-10 h-10 border-4 border-[#ffa726] border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { SignupRequest, LoginRequest, AuthResponse, User } from '@/types/auth';
+import { SignupRequest, LoginRequest, User } from '@/types/auth';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
@@ -9,19 +9,8 @@ const authClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // 쿠키 전송 활성화
 });
-
-// 토큰을 요청 헤더에 추가하는 인터셉터
-authClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
 // Auth API
 export const authAPI = {
@@ -31,7 +20,7 @@ export const authAPI = {
   },
 
   login: async (data: LoginRequest) => {
-    const response = await authClient.post<AuthResponse>('/auth/login', data);
+    const response = await authClient.post<{ message: string; user: User }>('/auth/login', data);
     return response.data;
   },
 
@@ -40,8 +29,13 @@ export const authAPI = {
     return response.data.user;
   },
 
-  logout: () => {
-    localStorage.removeItem('accessToken');
+  checkAuth: async () => {
+    const response = await authClient.get<{ authenticated: boolean; user: User | null }>('/auth/check');
+    return response.data;
+  },
+
+  logout: async () => {
+    await authClient.post('/auth/logout');
   },
 };
 

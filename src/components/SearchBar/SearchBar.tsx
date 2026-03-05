@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { IconSearch } from '@/components/ui/Icons';
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from '@/lib/useTranslations';
 
 interface SearchBarProps {
   onSearch?: (query: string) => void;
@@ -10,9 +11,11 @@ interface SearchBarProps {
 
 export default function SearchBar({
   onSearch,
-  placeholder = '키워드를 입력해주세요',
+  placeholder,
 }: SearchBarProps) {
+  const { t } = useTranslations();
   const [query, setQuery] = useState('');
+  const displayPlaceholder = placeholder ?? t('common.searchPlaceholder');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,21 +27,22 @@ export default function SearchBar({
   return (
     <form
       onSubmit={handleSubmit}
-      className="relative w-full h-12 sm:h-14 bg-primary-lightGray rounded-xl flex items-center px-4 gap-2"
+      className="relative w-full h-16 bg-white rounded-2xl flex items-center px-6 gap-4 shadow-2xl hover:shadow-[0_20px_50px_rgba(0,0,0,0.15)] transition-all"
     >
+      <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
       <input
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder={placeholder}
-        className="flex-1 min-w-0 bg-transparent border-none outline-none text-[15px] sm:text-[16px] font-pretendard placeholder:text-primary-gray"
+        placeholder={displayPlaceholder}
+        className="flex-1 min-w-0 bg-transparent border-none outline-none text-[16px] font-pretendard placeholder:text-gray-400 text-gray-900"
       />
       <button
         type="submit"
-        className="flex-shrink-0 w-9 h-9 flex items-center justify-center text-gray-500 hover:text-black transition-colors"
-        aria-label="검색"
+        className="flex-shrink-0 px-6 py-3 bg-gradient-to-r from-[#ffa726] to-[#ffb74d] text-white rounded-xl text-[15px] font-bold hover:from-[#f57c00] hover:to-[#ffa726] transition-all hover:scale-105 shadow-md"
+        aria-label={t('common.search')}
       >
-        <IconSearch className="w-5 h-5" />
+        {t('common.search')}
       </button>
     </form>
   );

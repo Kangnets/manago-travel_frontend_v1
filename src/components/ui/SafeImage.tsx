@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 
-const PLACEHOLDER = '/placeholder.svg';
+const PLACEHOLDER = '/placeholder.png';
 
 interface SafeImageProps {
   src: string;
