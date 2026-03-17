@@ -7,6 +7,7 @@ import AgencyProductForm, {
   ProductFormData,
 } from '@/components/agency/AgencyProductForm';
 import { agencyProductAPI } from '@/lib/agencyApi';
+import { agencyCustomizationAPI } from '@/lib/agencyCustomizationApi';
 import { productAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -22,19 +23,25 @@ export default function EditProductPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [portalSlug, setPortalSlug] = useState<string | null>(null);
 
-  // Get portal slug from customization settings
   useEffect(() => {
     if (!user) return;
-    const saved = localStorage.getItem(`agency_customization_${user.id}`);
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        if (data.slug) setPortalSlug(data.slug);
-      } catch {
-        // ignore
-      }
-    }
-  }, [user]);
+    let cancelled = false;
+
+    agencyCustomizationAPI
+      .getMine<{ slug?: string }>()
+      .then((customization) => {
+        if (cancelled) return;
+        const slug = customization?.slug || customization?.settings?.slug || null;
+        setPortalSlug(slug);
+      })
+      .catch(() => {
+        if (!cancelled) setPortalSlug(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     const fetchProduct = async () => {

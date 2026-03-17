@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage, Language } from '@/contexts/LanguageContext';
 import { useAdminLanguage } from '@/contexts/AdminLanguageContext';
+import { agencyCustomizationAPI } from '@/lib/agencyCustomizationApi';
 import {
   SwatchIcon,
   DocumentTextIcon,
@@ -150,56 +151,100 @@ export default function CustomizePage() {
     )
   );
   const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const [slugError, setSlugError] = useState('');
 
   useEffect(() => {
     if (!user) return;
+    let cancelled = false;
     const base = defaultCustomization(
       user.agencyName || user.name || '여행사',
       user.email,
       adminLanguage,
       publicLanguage,
     );
-    const saved = localStorage.getItem(`agency_customization_${user.id}`);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
+    setLoadError('');
+
+    agencyCustomizationAPI
+      .getMine<AgencyCustomization>()
+      .then((saved) => {
+        if (cancelled) return;
+        if (!saved?.settings) {
+          setSettings(base);
+          return;
+        }
+
+        const nextAdminLanguage: Language =
+          saved.settings.adminLanguage === 'en' || saved.adminLanguage === 'en' ? 'en' : 'ko';
+        const nextServiceLanguage: Language =
+          saved.settings.serviceLanguage === 'en' || saved.serviceLanguage === 'en' ? 'en' : 'ko';
+
         setSettings({
           ...base,
-          ...parsed,
-          adminLanguage: parsed.adminLanguage === 'en' ? 'en' : base.adminLanguage,
-          serviceLanguage: parsed.serviceLanguage === 'en' ? 'en' : base.serviceLanguage,
+          ...saved.settings,
+          slug: saved.slug || saved.settings.slug || '',
+          adminLanguage: nextAdminLanguage,
+          serviceLanguage: nextServiceLanguage,
         });
-      } catch {
+        setAdminLanguage(nextAdminLanguage);
+        setLanguage(nextServiceLanguage);
+      })
+      .catch((err: any) => {
+        if (cancelled) return;
         setSettings(base);
-      }
-    } else {
-      setSettings(base);
-    }
-  }, [user, adminLanguage, publicLanguage]);
+        setLoadError(
+          err?.response?.data?.message ||
+            '커스터마이징 설정을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
+        );
+      });
 
-  const handleSave = (navigateToPortal: boolean = false) => {
+    return () => {
+      cancelled = true;
+    };
+  }, [user, adminLanguage, publicLanguage, setAdminLanguage, setLanguage]);
+
+  const handleSave = async (navigateToPortal: boolean = false) => {
     if (!user) return;
     if (settings.slug && !/^[a-z0-9-]+$/.test(settings.slug)) {
       setSlugError('영문 소문자, 숫자, 하이픈(-)만 사용 가능합니다');
       setActiveTab('url');
       return;
     }
-    localStorage.setItem(`agency_customization_${user.id}`, JSON.stringify(settings));
-    setAdminLanguage(settings.adminLanguage);
-    setLanguage(settings.serviceLanguage);
-    // Dispatch storage event for other tabs/components to detect changes
-    window.dispatchEvent(new StorageEvent('storage', {
-      key: `agency_customization_${user.id}`,
-      newValue: JSON.stringify(settings),
-    }));
-    setIsSaved(true);
 
-    if (navigateToPortal && settings.slug) {
-      // Navigate to portal page to see changes
-      router.push(`/portal/${settings.slug}`);
-    } else {
+    setLoadError('');
+    setIsSaving(true);
+
+    try {
+      const saved = await agencyCustomizationAPI.saveMine<AgencyCustomization>(settings);
+      const nextAdminLanguage: Language =
+        saved.settings.adminLanguage === 'en' || saved.adminLanguage === 'en' ? 'en' : 'ko';
+      const nextServiceLanguage: Language =
+        saved.settings.serviceLanguage === 'en' || saved.serviceLanguage === 'en' ? 'en' : 'ko';
+
+      const nextSettings: AgencyCustomization = {
+        ...settings,
+        ...saved.settings,
+        slug: saved.slug || saved.settings.slug || '',
+        adminLanguage: nextAdminLanguage,
+        serviceLanguage: nextServiceLanguage,
+      };
+
+      setSettings(nextSettings);
+      setAdminLanguage(nextAdminLanguage);
+      setLanguage(nextServiceLanguage);
+      setIsSaved(true);
+
+      if (navigateToPortal && nextSettings.slug) {
+        router.push(`/portal/${nextSettings.slug}`);
+        return;
+      }
+
       setTimeout(() => setIsSaved(false), 2500);
+    } catch (err: any) {
+      setLoadError(err?.response?.data?.message || tr('저장에 실패했습니다.', 'Failed to save settings.'));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -236,20 +281,22 @@ export default function CustomizePage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => handleSave(false)}
+            disabled={isSaving}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-[14px] transition-all shadow-md ${
               isSaved
                 ? 'bg-green-500 text-white'
-                : 'bg-gradient-to-r from-[#ffa726] to-[#ffb74d] text-white hover:from-[#f57c00] hover:to-[#ffa726]'
+                : 'bg-gradient-to-r from-[#ffa726] to-[#ffb74d] text-white hover:from-[#f57c00] hover:to-[#ffa726] disabled:opacity-60 disabled:cursor-not-allowed'
             }`}
           >
             {isSaved
               ? <><CheckCircleIcon className="w-5 h-5" /> {tr('저장됨', 'Saved')}</>
-              : <><CheckIcon className="w-5 h-5" /> {tr('저장하기', 'Save')}</>}
+              : <><CheckIcon className="w-5 h-5" /> {isSaving ? tr('저장 중...', 'Saving...') : tr('저장하기', 'Save')}</>}
           </button>
           {settings.slug && (
             <button
               onClick={() => handleSave(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-[14px] transition-all shadow-md bg-[#1a1a2e] text-white hover:bg-[#2d2d4e]"
+              disabled={isSaving}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-[14px] transition-all shadow-md bg-[#1a1a2e] text-white hover:bg-[#2d2d4e] disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <ArrowTopRightOnSquareIcon className="w-5 h-5" />
               {tr('저장 후 확인', 'Save & Open')}
@@ -257,6 +304,12 @@ export default function CustomizePage() {
           )}
         </div>
       </div>
+
+      {loadError && (
+        <div className="mb-4 px-4 py-3 rounded-xl border border-red-200 bg-red-50 text-red-700 text-[13px]">
+          {loadError}
+        </div>
+      )}
 
       {/* Portal URL Banner (if slug is set) */}
       {portalUrl && (

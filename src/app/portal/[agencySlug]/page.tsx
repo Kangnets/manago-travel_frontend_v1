@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -19,6 +19,8 @@ import {
   PlayIcon,
 } from '@heroicons/react/24/outline';
 import { StarIcon } from '@heroicons/react/24/solid';
+import { productAPI } from '@/lib/api';
+import { agencyCustomizationAPI } from '@/lib/agencyCustomizationApi';
 
 interface AgencyCustomization {
   agencyDisplayName: string;
@@ -48,6 +50,8 @@ interface AgencyCustomization {
   showPassportOcr: boolean;
   templateId: string;
   slug: string;
+  adminLanguage?: 'ko' | 'en';
+  serviceLanguage?: 'ko' | 'en';
 }
 
 interface Product {
@@ -79,60 +83,40 @@ export default function AgencyPortalPage() {
   const [showContact, setShowContact] = useState(false);
   const [notFound, setNotFound] = useState(false);
 
-  const findAgencyBySlug = useCallback(() => {
-    if (typeof window === 'undefined') return null;
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key?.startsWith('agency_customization_')) {
-        try {
-          const data = JSON.parse(localStorage.getItem(key) || '{}');
-          if (data.slug === agencySlug) return data;
-        } catch {
-          // ignore
-        }
-      }
-    }
-    return null;
-  }, [agencySlug]);
-
-  // Initial data load
   useEffect(() => {
+    if (!agencySlug) return;
+    let cancelled = false;
+
     setLoading(true);
-    const data = findAgencyBySlug();
-    if (data) {
-      setSettings(data);
-      // Mock products
-      setProducts([
-        { id: '1', title: '다낭 5일 패키지', description: '베트남 다낭 최고의 리조트에서 즐기는 럭셔리 여행', location: '다낭', country: '베트남', duration: '5일 4박', price: 890000, category: 'hotel' },
-        { id: '2', title: '호이안 & 다낭 투어', description: '세계문화유산 호이안과 다낭의 명소를 한번에', location: '호이안', country: '베트남', duration: '4일 3박', price: 750000, category: 'tour' },
-        { id: '3', title: '하노이 자유여행', description: '하노이 구시가지와 하롱베이 크루즈 포함', location: '하노이', country: '베트남', duration: '6일 5박', price: 1050000, category: 'tour' },
-        { id: '4', title: '방콕 골프 투어', description: '태국 최고급 골프 코스에서 즐기는 골프 여행', location: '방콕', country: '태국', duration: '5일 4박', price: 1500000, category: 'golf' },
-        { id: '5', title: '발리 스파 패키지', description: '발리의 럭셔리 리조트 스파 & 힐링 프로그램', location: '발리', country: '인도네시아', duration: '4일 3박', price: 980000, category: 'spa' },
-        { id: '6', title: '세부 호핑투어', description: '필리핀 세부 아일랜드 호핑 & 다이빙', location: '세부', country: '필리핀', duration: '5일 4박', price: 850000, category: 'tour' },
-      ]);
-    } else {
-      setNotFound(true);
-    }
-    setLoading(false);
-  }, [findAgencyBySlug]);
+    setNotFound(false);
 
-  // Listen for localStorage changes for real-time updates
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key?.startsWith('agency_customization_') && e.newValue) {
+    agencyCustomizationAPI
+      .getBySlug<AgencyCustomization>(agencySlug)
+      .then(async (result) => {
+        if (cancelled) return;
+        setSettings(result.settings);
         try {
-          const data = JSON.parse(e.newValue);
-          if (data.slug === agencySlug) {
-            setSettings(data);
-          }
+          const items = await productAPI.getByAgency(result.agencyId);
+          if (!cancelled) setProducts(items as unknown as Product[]);
         } catch {
-          // ignore parse errors
+          if (!cancelled) setProducts([]);
         }
-      }
-    };
+      })
+      .catch((err: any) => {
+        if (cancelled) return;
+        if (err?.response?.status === 404) {
+          setNotFound(true);
+        } else {
+          setNotFound(true);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    return () => {
+      cancelled = true;
+    };
   }, [agencySlug]);
 
   if (loading) {
@@ -357,6 +341,9 @@ export default function AgencyPortalPage() {
             >
               {/* Product image */}
               <div className="h-44 relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${secondary}99, ${primary}55)` }}>
+                {product.imageUrl && (
+                  <img src={product.imageUrl} alt={product.title} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                )}
                 <div className="absolute inset-0 flex items-center justify-center">
                   {(() => {
                     const CategoryIcon = getCategoryIcon(product.category);
@@ -391,12 +378,13 @@ export default function AgencyPortalPage() {
                       ₩{product.price.toLocaleString()}
                     </div>
                   </div>
-                  <button
-                    className="px-4 py-2 rounded-xl text-[13px] font-bold text-white transition-all hover:brightness-90 active:scale-95 group-hover:scale-105"
+                  <Link
+                    href={`/products/${product.id}`}
+                    className="px-4 py-2 rounded-xl text-[13px] font-bold text-white transition-all hover:brightness-90 active:scale-95 group-hover:scale-105 inline-block"
                     style={{ background: primary }}
                   >
                     예약하기
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>
