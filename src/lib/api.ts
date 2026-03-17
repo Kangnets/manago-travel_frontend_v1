@@ -81,6 +81,13 @@ export const productAPI = {
     });
     return response.data;
   },
+
+  getByAgency: async (agencyId: string, params?: { category?: string; limit?: number }) => {
+    const response = await apiClient.get<Product[]>('/products', {
+      params: { agencyId, ...params },
+    });
+    return response.data;
+  },
 };
 
 // Review API

@@ -11,6 +11,8 @@ interface AuthContextType {
   signup: (data: SignupRequest) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  /** 개발 환경 전용: 백엔드 없이 mock 유저로 즉시 로그인 */
+  devLogin: (mockUser: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -55,12 +57,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await authAPI.logout();
+    try {
+      await authAPI.logout();
+    } catch {
+      // 개발 환경 등 백엔드 미연결 시에도 로컬 상태는 초기화
+    }
     setUser(null);
   }, []);
 
+  const devLogin = useCallback((mockUser: User) => {
+    setUser(mockUser);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, signup, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, isLoading, login, signup, logout, refreshUser, devLogin }}>
       {children}
     </AuthContext.Provider>
   );

@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useState, useRef, useEffect } from 'react';
 import { useTranslations } from '@/lib/useTranslations';
 import {
@@ -43,6 +44,7 @@ export default function Header() {
   const pathname = usePathname();
   const { t } = useTranslations();
   const { user, logout, isLoading } = useAuth();
+  const { language, toggleLanguage } = useLanguage();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
@@ -106,7 +108,8 @@ export default function Header() {
         </div>
 
         {/* 우측 액션 */}
-        {isLoading ? (
+        <div className="flex items-center gap-2">
+          {isLoading ? (
           <div className="w-[140px] h-10 bg-gray-100 animate-pulse rounded-full" />
         ) : user ? (
           <div className="relative" ref={dropdownRef}>
@@ -175,6 +178,15 @@ export default function Header() {
             <span className="text-[14px] font-bold">{t('header.loginSignup')}</span>
           </Link>
         )}
+          <button
+            type="button"
+            onClick={toggleLanguage}
+            title={language === 'ko' ? 'Switch to English' : '한국어로 전환'}
+            className="h-10 px-3.5 rounded-full border border-gray-200 bg-white text-[13px] font-semibold text-gray-600 hover:border-[#ffa726] hover:text-[#ffa726] hover:bg-orange-50 active:scale-95 transition-all duration-200"
+          >
+            {language === 'ko' ? 'English' : '한국어'}
+          </button>
+        </div>
       </div>
     </header>
   );
